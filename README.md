@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Infinite Canvas
+
+Welcome to the Infinite Canvas project. This is a Next.js application that lets you drag, drop, and organize items on an infinite board. It's built to be fast, persistent, and easy to use.
 
 ## Getting Started
 
-First, run the development server:
+If you want to run this locally, 
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1.  **Install dependencies:**
+    ```bash
+    npm install
+    # or
+    yarn
+    # or
+    pnpm install
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2.  **Run the dev server:**
+    ```bash
+    npm run dev
+    ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3.  Open [http://localhost:3000](http://localhost:3000) and start.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Approach & Design Decisions
+Here is the thinking behind the tech stack and architecture.
 
-To learn more about Next.js, take a look at the following resources:
+### 1. State Management: Why Zustand?
+I picked **Zustand** over React Context or Redux for a few reasons:
+*   **Performance:** Canvas apps can get heavy. Zustand allows components to subscribe only to the specific slices of state they need (like just the `items` array), preventing unnecessary re-renders of the whole board when one tiny thing changes.
+*   **Simplicity:** It’s way less complex than Redux. I just wanted a simple global store that works.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. The annoying part (Undo/Redo)
+Implementing undo/redo manually is usually a nightmare of edge cases. I used **Zundo**, which is middleware for Zustand.
+*   It effectively gives us "time travel" for free.
+*   It tracks the state history automatically, so I didn't have to write complex logic to push/pop history stacks myself.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 3. The "Infinite" Z-Index
+You might notice the logic for `bringToFront` in the store is a bit unique. Instead of sorting the array every time you click an item (which is expensive if you have thousands of items), I just keep a global `maxZIndex` counter.
+*   When you click an item, I just increment `maxZIndex` and assign it to that item.
+*   It’s a simple O(1) operation vs. O(n log n) sorting.
 
-## Deploy on Vercel
+### 4. Persistence
+I didn't want you to lose your work if you accidentally refreshed the tab.
+*   I used `idb-keyval` with Zustand's `persist` middleware.
+*   This saves the canvas state to IndexedDB (which handles larger data better than `localStorage`) and rehydrates it automatically when the app loads.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 5. Styling
+I'm using **Tailwind CSS v4** here. It keeps the CSS bundle small and lets me iterate on the UI really fast without context-switching to a separate CSS file.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+

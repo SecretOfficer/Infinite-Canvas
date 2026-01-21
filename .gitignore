@@ -36,6 +36,13 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Exclude user requested artifacts
+*plan*.md
+*explanation*.md
+brain/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
